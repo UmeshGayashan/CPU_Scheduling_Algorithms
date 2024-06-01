@@ -182,25 +182,6 @@ int main() {
     float avg_waiting_time_rr = calculate_avg_waiting_time(processes_rr, n);
     printf("RR Average Waiting Time: %.2f\n", avg_waiting_time_rr);
     print_processes(processes_rr, n);
-
-    // Analysis
-    printf("\nAnalysis of CPU Scheduling Algorithms:\n");
-    printf("\n1. First-Come, First-Served (FCFS):\n");
-    printf("   Average Waiting Time: %.2f\n", avg_waiting_time_fcfs);
-    printf("   - Simple to implement.\n");
-    printf("   - May lead to long waiting times, especially if the first process has a long burst time.\n");
     
-    printf("\n2. Shortest Job First (SJF):\n");
-    printf("   Average Waiting Time: %.2f\n", avg_waiting_time_sjf);
-    printf("   - More efficient in terms of average waiting time.\n");
-    printf("   - Requires knowledge of burst time in advance, which is not always possible.\n");
-    printf("   - Can lead to starvation of longer processes if many short processes keep arriving.\n");
-    
-    printf("\n3. Round Robin (RR):\n");
-    printf("   Average Waiting Time: %.2f\n", avg_waiting_time_rr);
-    printf("   - Fair allocation of CPU time.\n");
-    printf("   - Suitable for time-sharing systems.\n");
-    printf("   - The choice of quantum impacts performance; too small a quantum leads to high context-switching overhead, too large a quantum makes it similar to FCFS.\n");
-
     return 0;
 }
