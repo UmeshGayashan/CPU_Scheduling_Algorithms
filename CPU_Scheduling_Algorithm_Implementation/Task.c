@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 typedef struct {
     char pid[3];
@@ -8,6 +9,7 @@ typedef struct {
     int burst_time;
     int waiting_time;
     int turnaround_time;
+    int remaining_time;
 } Process;
 
 // First come First Serve
@@ -64,31 +66,75 @@ void sjf(Process processes[], int n) {
 
 void rr(Process processes[], int n, int quantum) {
     int current_time = 0;
-    int *burst_remaining = (int *)malloc(n * sizeof(int));
+    int completed = 0;
+    int queue[100];
+    int front = 0, rear = 0;
+    bool is_completed[n];
+
     for (int i = 0; i < n; i++) {
-        burst_remaining[i] = processes[i].burst_time;
+        is_completed[i] = false;
+        processes[i].remaining_time = processes[i].burst_time;
     }
-    while (1) {
-        int done = 1;
-        for (int i = 0; i < n; i++) {
-            if (burst_remaining[i] > 0) {
-                done = 0;
-                if (burst_remaining[i] > quantum) {
-                    current_time += quantum;
-                    burst_remaining[i] -= quantum;
-                } else {
-                    current_time += burst_remaining[i];
-                    processes[i].waiting_time = current_time - processes[i].burst_time - processes[i].arrival_time;
-                    burst_remaining[i] = 0;
+
+    queue[rear++] = 0;
+
+    while (completed != n) {
+        int idx = queue[front++];
+
+        if (processes[idx].remaining_time <= quantum) {
+            current_time += processes[idx].remaining_time;
+            processes[idx].remaining_time = 0;
+            is_completed[idx] = true;
+            completed++;
+            processes[idx].turnaround_time = current_time - processes[idx].arrival_time;
+            processes[idx].waiting_time = processes[idx].turnaround_time - processes[idx].burst_time;
+
+            for (int i = 0; i < n; i++) {
+                if (!is_completed[i] && processes[i].arrival_time <= current_time && i != idx) {
+                    bool in_queue = false;
+                    for (int j = front; j < rear; j++) {
+                        if (queue[j] == i) {
+                            in_queue = true;
+                            break;
+                        }
+                    }
+                    if (!in_queue) {
+                        queue[rear++] = i;
+                    }
+                }
+            }
+        } else {
+            current_time += quantum;
+            processes[idx].remaining_time -= quantum;
+
+            for (int i = 0; i < n; i++) {
+                if (!is_completed[i] && processes[i].arrival_time <= current_time && i != idx) {
+                    bool in_queue = false;
+                    for (int j = front; j < rear; j++) {
+                        if (queue[j] == i) {
+                            in_queue = true;
+                            break;
+                        }
+                    }
+                    if (!in_queue) {
+                        queue[rear++] = i;
+                    }
+                }
+            }
+            queue[rear++] = idx;
+        }
+
+        if (front == rear) {
+            for (int i = 0; i < n; i++) {
+                if (!is_completed[i]) {
+                    queue[rear++] = i;
+                    break;
                 }
             }
         }
-        if (done) {
-            break;
-        }
     }
-    free(burst_remaining);
 }
+
 
 float calculate_avg_waiting_time(Process processes[], int n) {
     int total_waiting_time = 0;
@@ -131,7 +177,7 @@ int main() {
     print_processes(processes_sjf, n);
 
     // RR
-    int quantum = 4;
+    int quantum = 3;
     rr(processes_rr, n, quantum);
     float avg_waiting_time_rr = calculate_avg_waiting_time(processes_rr, n);
     printf("RR Average Waiting Time: %.2f\n", avg_waiting_time_rr);
