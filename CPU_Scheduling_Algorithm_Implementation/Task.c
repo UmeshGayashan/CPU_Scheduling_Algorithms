@@ -7,8 +7,10 @@ typedef struct {
     int arrival_time;
     int burst_time;
     int waiting_time;
+    int turnaround_time;
 } Process;
 
+// First come First Serve
 void fcfs(Process processes[], int n) {
     int current_time = 0;
     for (int i = 0; i < n; i++) {
@@ -21,24 +23,42 @@ void fcfs(Process processes[], int n) {
 }
 
 void sjf(Process processes[], int n) {
-    Process temp;
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (processes[i].arrival_time > processes[j].arrival_time ||
-               (processes[i].arrival_time == processes[j].arrival_time && processes[i].burst_time > processes[j].burst_time)) {
-                temp = processes[i];
-                processes[i] = processes[j];
-                processes[j] = temp;
+    int current_time = 0;
+    int completed = 0;
+    int is_completed[n];
+    for (int i = 0; i < n; i++) {
+        is_completed[i] = 0;
+    }
+
+    while (completed != n) {
+        int idx = -1;
+        int min_burst_time = 10000; // A large number representing infinity
+
+        // Find the process with the smallest burst time that has arrived and is not completed
+        for (int i = 0; i < n; i++) {
+            if (processes[i].arrival_time <= current_time && !is_completed[i]) {
+                if (processes[i].burst_time < min_burst_time) {
+                    min_burst_time = processes[i].burst_time;
+                    idx = i;
+                }
+                // If two processes have the same burst time, choose the one that arrived first
+                if (processes[i].burst_time == min_burst_time) {
+                    if (processes[i].arrival_time < processes[idx].arrival_time) {
+                        idx = i;
+                    }
+                }
             }
         }
-    }
-    int current_time = 0;
-    for (int i = 0; i < n; i++) {
-        if (current_time < processes[i].arrival_time) {
-            current_time = processes[i].arrival_time;
+
+        if (idx != -1) {
+            processes[idx].waiting_time = current_time - processes[idx].arrival_time;
+            current_time += processes[idx].burst_time;
+            processes[idx].turnaround_time = processes[idx].waiting_time + processes[idx].burst_time;
+            is_completed[idx] = 1;
+            completed++;
+        } else {
+            current_time++;
         }
-        processes[i].waiting_time = current_time - processes[i].arrival_time;
-        current_time += processes[i].burst_time;
     }
 }
 
